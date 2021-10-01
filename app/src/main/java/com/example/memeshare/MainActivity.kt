@@ -19,25 +19,36 @@ import com.bumptech.glide.request.target.Target
 
 class MainActivity : AppCompatActivity() {
     private lateinit var memeImage:ImageView
-    private lateinit var progressBar:ProgressBar
-    private lateinit var nextButton : Button
-    private lateinit var shareButton : Button
-    private var currImageUrl:String? = null
+    private lateinit var nextButton: Button
+    private lateinit var shareButton: Button
+    private var currImageUrl: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        nextButton = findViewById(R.id.nextButton)
+        shareButton = findViewById(R.id.shareButton)
+        nextButton.setOnClickListener{
+            loadMeme()
+        }
+        shareButton.setOnClickListener{
+            val intent = Intent(Intent.ACTION_SEND)
+            intent.type = "text/plain"
+            intent.putExtra(Intent.EXTRA_TEXT,"Hey Checkout This Cool Meme I Got From Reddit $currImageUrl")
+            val chooser = Intent.createChooser(intent,"Send This Meme Using...")
+            startActivity(chooser)
+        }
         loadMeme()
     }
     private fun loadMeme(){
-         progressBar  = findViewById(R.id.progressBar)
+        val progressBar = findViewById<ProgressBar>(R.id.progressBar)
         progressBar.visibility = View.VISIBLE
-
         val url = "https://meme-api.herokuapp.com/gimme"
 
-        val jsonObjectRequest = JsonObjectRequest(Request.Method.GET, url, null,
+        val jsonObjectRequest = JsonObjectRequest(Request.Method.GET, url,null,
             { response ->
                 currImageUrl = response.getString("url")
+
                 memeImage = findViewById(R.id.memeImageView)
                 Glide.with(this).load(currImageUrl).listener(object:RequestListener<Drawable>{
                     override fun onLoadFailed(
@@ -64,20 +75,10 @@ class MainActivity : AppCompatActivity() {
                 }).into(memeImage)
             },
             {
-                Toast.makeText(this,"Something went wrong",Toast.LENGTH_LONG).show()
-            }
-        )
+                Toast.makeText(this,"Some Error Occurred...",Toast.LENGTH_LONG).show()
+            })
 
-       MySingleton.getInstance(this).addToRequestQueue(jsonObjectRequest)
-    }
-    fun shareMeme(view: View) {
-        val intent = Intent(Intent.ACTION_SEND)
-        intent.type = "text/plain"
-        intent.putExtra(Intent.EXTRA_TEXT,"Hey, checkout this cool meme I got from Reddit $currImageUrl")
-        val chooser = Intent.createChooser(intent,"Share this meme using...")
-        startActivity(chooser)
-    }
-    fun nextMeme(view: View) {
-        loadMeme()
+// Add the request to the RequestQueue.
+        MySingleton.getInstance(this).addToRequestQueue(jsonObjectRequest)
     }
 }
